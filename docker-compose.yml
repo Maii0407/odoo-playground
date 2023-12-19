@@ -13,9 +13,12 @@ services:
       # - ./config:/etc/odoo
       - ./addons:/mnt/extra-addons
     environment:
+      - HOST=db
+      - USER=odoo
       - PASSWORD_FILE=/run/secrets/postgresql_password
     secrets:
       - postgresql_password
+    command: odoo -u estate -d db
   db:
     image: postgres:15
     platform: linux/x86_64
@@ -32,6 +35,7 @@ services:
       - postgresql_password
 volumes:
   odoo-web-data:
+  addons:
   odoo-db-data:
 
 secrets:

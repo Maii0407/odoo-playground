@@ -18,7 +18,7 @@ services:
       - PASSWORD_FILE=/run/secrets/postgresql_password
     secrets:
       - postgresql_password
-    command: odoo -u estate -d db
+    command: odoo -u estate -d db --dev xml
   db:
     image: postgres:15
     platform: linux/x86_64

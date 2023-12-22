@@ -1,6 +1,6 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 from datetime import timedelta
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 class Property(models.Model):
   _name = "estate.property"
@@ -48,6 +48,19 @@ class Property(models.Model):
   total_area = fields.Integer('Total Area (sqm)', compute="_compute_total_area")
   best_price = fields.Float('Best Offer', compute="_compute_best_price")
 
+  _sql_constraints = [
+    (
+      'check_expected_price',
+      'CHECK(expected_price > 0)',
+      'Property expected price must be positive value'
+    ),
+    (
+      'check_selling_price',
+      'CHECK(selling_price > 0)',
+      'Property selling price must be positive value'
+    )
+  ]
+
   @api.depends("living_area", "garden_area")
   def _compute_total_area(self):
     for record in self:
@@ -70,6 +83,14 @@ class Property(models.Model):
     else:
       self.garden_area = 0
       self.garden_orientation = ''
+
+  @api.constrains("selling_price", "expected_price")
+  def _check_selling_price(self):
+      for record in self:
+          if not tools.float_is_zero(record.selling_price, precision_digits=2) and not tools.float_is_zero(record.expected_price, precision_digits=2):
+              min_selling_price = 0.9 * record.expected_price
+              if tools.float_compare(record.selling_price, min_selling_price, precision_digits=2) == -1:
+                  raise ValidationError("Selling Price cannot be lower than 90% of the Expected Price!")
 
   def cancel_property(self):
     for record in self:

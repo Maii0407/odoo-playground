@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from datetime import timedelta
+from odoo.exceptions import UserError
 
 class PropertyOffer(models.Model):
   _name = "estate.property.offer"
@@ -27,7 +28,24 @@ class PropertyOffer(models.Model):
       else:
         record.date_deadline = fields.Datetime.today() + timedelta(days=record.validity)
 
-  def _inverse_date_deadline(self):
+  # def _inverse_date_deadline(self):
+  #   for record in self:
+  #     if record.date_deadline:
+  #       record.validity = (record.date_d?eadline - record.create_date).days
+
+  def accept_offer(self):
     for record in self:
-      if record.date_deadline:
-        record.validity = (record.date_deadline - record.create_date).days
+      if record.property_id.state == 'offer accepted':
+        raise UserError("Another offer has already been accepted for this property.")
+
+      record.status = 'accepted'
+      property_id = record.property_id
+      property_id.buyer = record.partner_id
+      property_id.selling_price = record.price
+      property_id.state = 'offer accepted'
+    return True
+  
+  def refuse_offer(self):
+    for record in self:
+      record.status = 'refused'
+    return True
